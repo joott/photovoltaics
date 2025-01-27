@@ -4,20 +4,20 @@ friendly and can offer some cool features if you are curious. The libraries
 that I used are a bit hazy (I wrote this over a year and a half ago)... but I
 did my best:
 
-NumPy
- - basic library for maths in python
-PyMeasure
- - This will do most of the heavy lifting
-Scipy
- - Honestly I dont remember what I pulled... but I do use it
-Pandas
- - Data Management
-Matplotlib
- - For generating plots
-openpyxl
- - ...
-sqlite3
- - I was using this library to upload data to a database directly from analysis. A simple tutorial can explain it on youtube. SQL is great and lightweight.
+- NumPy
+    - basic library for maths in python
+- PyMeasure
+    - This will do most of the heavy lifting
+- Scipy
+    - Honestly I dont remember what I pulled... but I do use it
+- Pandas
+    - Data Management
+- Matplotlib
+    - For generating plots
+- openpyxl
+    - ...
+- sqlite3
+    - I was using this library to upload data to a database directly from analysis. A simple tutorial can explain it on youtube. SQL is great and lightweight.
 
 Keithly2400_with_4_probe and Keithly2700_with_7700 are modified scripts from
 the Pymeasure library to accommodate our setup. In the 2400 file I called on
