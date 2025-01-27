@@ -38,7 +38,7 @@ It is quite disorganized, but not bad enough to be unfollowable.
 
 To bring it all together, you will work within the 173_keithley and
 run_collect_data_2400_voltage which call on betterlabview which will call on
-pymeasure and our modified scripts. 173_kiethley is designed for multiplexing,
+pymeasure and our modified scripts. 173_keithley is designed for multiplexing,
 (varying channels in the back of the Keithley 2700) while
 run_collect_data_2400_voltage is designed to work on a single channel. I
 recommend writing your own script, similar to 173_keithley, if you can find the

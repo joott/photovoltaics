@@ -16,7 +16,7 @@ GPIB2700 = 'GPIB::17'
 K2400 = K24.Keithley2400(GPIB2400)
 K2700 = K27.Keithley2700_with_7700(GPIB2700)
 
-#reset the keithelys before each run
+#reset the keithleys before each run
 K2400.reset()
 K2700.reset()
 
@@ -36,7 +36,7 @@ number_of_devices = len(device_list)
 current_arrays = [[] for _ in range(number_of_devices)]
 voltage_arrays = [[] for _ in range(number_of_devices)]
 
-#function that interacts with keithly
+#function that interacts with keithley
 current_arrays, voltage_arrays = list(bl.collect_data_current(GPIB2400, GPIB2700, buffer_num, device_list, v_min,v_max,v_step,current_arrays,voltage_arrays))
 
 K2400.reset()
