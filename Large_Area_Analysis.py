@@ -1,7 +1,6 @@
 import numpy as np
 import scipy.interpolate as itp
 import scipy.optimize as opt
-from scipy.misc import derivative
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
