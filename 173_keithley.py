@@ -8,6 +8,7 @@ import sys
 import Large_Area_Analysis as LAA
 
 
+
 #Establish GPIB connectoins
 GPIB2400 = 'GPIB::24'
 GPIB2700 = 'GPIB::17'
@@ -20,7 +21,7 @@ K2700 = K27.Keithley2700_with_7700(GPIB2700)
 K2400.reset()
 K2700.reset()
 
-batch_path = 'C:/Users/DawsonBoone/Desktop/173 Tester/Data/test/1'
+batch_path = './data/test/1'
 
 #establish measurement parameters
 substrate_num = 1
@@ -38,6 +39,7 @@ voltage_arrays = [[] for _ in range(number_of_devices)]
 
 #function that interacts with keithley
 current_arrays, voltage_arrays = list(bl.collect_data_current(GPIB2400, GPIB2700, buffer_num, device_list, v_min,v_max,v_step,current_arrays,voltage_arrays))
+# bl.random_data(buffer_num, device_list, v_min,v_max,v_step,current_arrays,voltage_arrays)
 
 K2400.reset()
 

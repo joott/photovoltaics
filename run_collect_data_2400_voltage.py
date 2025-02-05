@@ -21,7 +21,7 @@ K2400.reset()
 # Specify the f1le name
 file_name = 'd-12'
 substrate_num = '4_72h'
-file_path = f'C:/Users/DawsonBoone_sfoybug/OneDrive - PolyPV/Desktop/173 Tester/Data/250110_encap/{substrate_num}/{file_name}'
+file_path = f'./data/250110_encap/{substrate_num}/{file_name}'
 
 #establish measurement parameters
 v_min = -1
