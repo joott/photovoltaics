@@ -56,7 +56,7 @@ def collect_data_current(GPIB2400,GPIB2700,buffer_num,device_list,V_min,V_max,V_
     # Activates auto-zero, increasing measurement accuracy
     K2400.auto_zero = True
     # Activates four-probe measurements
-    #K2400.four_probe()
+    K2400.four_probe()
     # Displays information on the front terminal
     K2400.use_front_terminals()
     # Allows the 2400 to begin sourcing voltage
