@@ -12,7 +12,14 @@ import random as rnd
 # Generates randomized floats from 0-1, in the same manner as the actual 
 # function below. Useful when access to the Keithleys is limited. Not as
 # heavily commented, will likely be removed on release
-def random_data(GPIB2400,GPIB2700,buffer_num,device_list,V_min,V_max,V_step):
+def random_data(
+        GPIB2400,
+        GPIB2700,
+        buffer_num,
+        device_list,
+        V_min,
+        V_max,
+        V_step):
     
     # Correcting integer 'device_list' inputs into lists with one item
     #device_list = [int(device_list)]
@@ -38,7 +45,14 @@ def random_data(GPIB2400,GPIB2700,buffer_num,device_list,V_min,V_max,V_step):
 # the number of measurements collected for each data point by the buffer, a list
 # of devices (and thus channels) to iterate over, the voltage and sweep values
 # needed to determine what voltage to source from the 2400.
-def collect_data_current(GPIB2400,GPIB2700,buffer_num,device_list,V_min,V_max,V_step, current_arrays, voltage_arrays):
+def collect_data_current(
+        GPIB2400,
+        GPIB2700,
+        buffer_num,
+        device_list,
+        V_min,
+        V_max,
+        V_step):
 
     # Correcting integer 'device_list' inputs into lists with one item
     #if type(device_list) != 'list':
@@ -62,12 +76,13 @@ def collect_data_current(GPIB2400,GPIB2700,buffer_num,device_list,V_min,V_max,V_
     # Allows the 2400 to begin sourcing voltage
     K2400.enable_source()
 
+    current_arrays = []
+    voltage_arrays = []
     # Loop over the voltage range and write data to array
     # Currently hardcoded pause, used to give the 2400 a moment to calibrate itself.
     # Without this, the first few data points tend to be meaningless. This should be
     # fixed before release
     #sleep(2.0)
-    count=0
     for i in device_list:
         K2400.apply_voltage(compliance_current=0.5)
         # Closes a channel on the 2700 relevant to the selected device number
@@ -75,7 +90,9 @@ def collect_data_current(GPIB2400,GPIB2700,buffer_num,device_list,V_min,V_max,V_
         K2700.close_23()
         K2700.close_channels(i)
         K2700.close_channels(i+10)
-        count = count+1
+        I_out = np.empty_like(V_arr)
+        V_out = np.empty_like(V_arr)
+
         for j in V_arr:
             # Configures the buffer to collect the specified number of points
             K2400.config_buffer(buffer_num)
@@ -88,8 +105,10 @@ def collect_data_current(GPIB2400,GPIB2700,buffer_num,device_list,V_min,V_max,V_
             # outputs a list of the device number, the voltage, and the current
             #yield [count,K2400.means[0],K2400.means[1]]
 
-            current_arrays[count-1].append(K2400.means[1])
-            voltage_arrays[count-1].append(K2400.means[0])
+            I_out[idx] = K2400.means[1]
+            V_out[idx] = K2400.means[0]
+        current_arrays.append(I_out)
+        voltage_arrays.append(V_out)
 
     return current_arrays, voltage_arrays
 
@@ -99,15 +118,22 @@ def collect_data_current(GPIB2400,GPIB2700,buffer_num,device_list,V_min,V_max,V_
 
 
 #says voltage for all current values and vice versa
-def collect_data_voltage(GPIB2400,GPIB2700,buffer_num,device_list,I_min,I_max,I_step, current_arrays, voltage_arrays):
-    
+def collect_data_voltage(
+        GPIB2400,
+        GPIB2700,
+        buffer_num,
+        device_list,
+        I_min,
+        I_max,
+        I_step):
+
     # Correcting integer 'device_list' inputs into lists with one item
     #if type(device_list) != 'list':
     #    device_list = [int(device_list)]
-    
+
     # Recreating V_arr based on the given inputs
     I_arr = np.arange(I_min,I_max+I_step,I_step)
-    
+
     # Initializing Keithleys
     K2400 = K24.Keithley2400(GPIB2400)
     K2700 = K27.Keithley2700_with_7700(GPIB2700)
@@ -125,21 +151,24 @@ def collect_data_voltage(GPIB2400,GPIB2700,buffer_num,device_list,I_min,I_max,I_
     K2400.use_front_terminals()
     # Allows the 2400 to begin sourcing voltage
     K2400.enable_source()
-    
+
+    current_arrays = []
+    voltage_arrays = []
     # Loop over the voltage range and write data to array
     # Currently hardcoded pause, used to give the 2400 a moment to calibrate itself.
     # Without this, the first few data points tend to be meaningless. This should be
     # fixed before release
     #sleep(2.0)
-    count=0
     for i in device_list:
         # Closes a channel on the 2700 relevant to the selected device number
         K2700.open_all_channels()
         K2700.close_23()
         K2700.close_channels(i)
         K2700.close_channels(i+10)
-        count = i
-        for j in I_arr:
+        I_out = np.empty_like(I_arr)
+        V_out = np.empty_like(I_arr)
+
+        for idx, j in enumerate(I_arr):
             # Configures the buffer to collect the specified number of points
             K2400.config_buffer(buffer_num)
             # Sets the output voltage to a specific entry in V_arr
@@ -149,8 +178,10 @@ def collect_data_voltage(GPIB2400,GPIB2700,buffer_num,device_list,I_min,I_max,I_
             # Doesn't progress until the buffer is full, checking every 0.025 seconds
             K2400.wait_for_buffer(interval=0.025)
             
-            current_arrays[i-1].append(K2400.means[1])
-            voltage_arrays[i-1].append(K2400.means[0])
+            I_out[idx] = K2400.means[1]
+            V_out[idx] = K2400.means[0]
+        current_arrays.append(I_out)
+        voltage_arrays.append(V_out)
 
     return current_arrays, voltage_arrays
 
@@ -161,14 +192,16 @@ def collect_data_voltage(GPIB2400,GPIB2700,buffer_num,device_list,I_min,I_max,I_
     #K2700.reset()
 
 
-
-
-
-
 # Collects actual data from the Keithley 2400. Takes as inputs the GPIB connections,
 # the number of measurements collected for each data point by the buffer, and the voltage and sweep values
 # needed to determine what voltage to source from the 2400.
-def collect_data_2400_current(GPIB2400,buffer_num,device_list,I_min,I_max,I_step):
+def collect_data_2400_current(
+        GPIB2400,
+        buffer_num,
+        device_list,
+        I_min,
+        I_max,
+        I_step):
 
     # Correcting integer 'device_list' inputs into lists with one item
     if type(device_list) != 'list':
@@ -189,7 +222,7 @@ def collect_data_2400_current(GPIB2400,buffer_num,device_list,I_min,I_max,I_step
     # Activates auto-zero, increasing measurement accuracy
     K2400.auto_zero = True
     # Activates four-probe measurements
-    #K2400.four_probe()
+    K2400.four_probe()
     # Displays information on the front terminal
     K2400.use_front_terminals()
     # Allows the 2400 to begin sourcing voltage
@@ -225,7 +258,14 @@ def collect_data_2400_current(GPIB2400,buffer_num,device_list,I_min,I_max,I_step
 # Collects actual data from the Keithley 2400. Takes as inputs the GPIB connections,
 # the number of measurements collected for each data point by the buffer, and the voltage and sweep values
 # needed to determine what voltage to source from the 2400.
-def collect_data_2400_voltage(GPIB2400,buffer_num,V_min,V_max,V_step,current_arrays,voltage_arrays):
+def collect_data_2400_voltage(
+        GPIB2400,
+        buffer_num,
+        V_min,
+        V_max,
+        V_step,
+        current_arrays,
+        voltage_arrays):
 
     # Recreating V_arr based on the given inputs
     V_arr = np.arange(V_min,V_max+V_step,V_step)
