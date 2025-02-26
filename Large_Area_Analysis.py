@@ -23,7 +23,122 @@ def find_closest_number(target, array):
     return closest_number
 
 #Function that characterizes the data
-def total_data(V_arr, I_arr, V_arr_d, I_arr_d, i, area, substrate_num):
+ # todo: check that this is the correct area - pulled from Senior Project (final).py
+def total_data_new(data_light, data_dark, device, area = (7.6)/100 , substrate_num=0):
+
+    V = data_light[:, 0]
+    I = data_light[:, 1]
+    Vd = data_dark[:, 0]
+    Id = data_dark[:, 1]
+
+    #define the input power - P_in = area * Solar_P/1 m^2
+    P_in = (100/1000) * area
+
+
+    #Interpolate the IV data
+    IV_func = itp.interp1d(V, I)
+    #Inverse of Interpolation
+    IV_func_inv = itp.interp1d(I, V)
+
+    #V_oc is when I=0
+    V_OC = IV_func_inv(0)
+    #reducing sigfigs
+    V_OC = np.round(V_OC, 3)
+
+
+    #I_sc is where V=0
+    I_SC = abs(IV_func(0))
+    #Generate J_sc.. Current per unit area, in this case milimeters
+    J_SC = I_SC * 1000 / area
+    #round to two sig figs
+    J_SC = np.round(J_SC, 3)
+
+    #Generate power array and then interpolate
+    P = np.zeros( V.size )
+    for i, v in enumerate(V):
+        P[i] = v * IV_func(v)
+
+    P_func = itp.interp1d(V, P)
+
+    #Finding the max power point.
+    P_test = np.zeros(V.size)
+    for i, v in enumerate(V):
+        P_test[i] = P_func(v)
+
+    V_MP_guess = V[np.argmin(P_test)]
+
+    if V_MP_guess <= V[0] or V_MP_guess >= V[-1]:
+        V_MP = 0
+    else:
+        V_MP = opt.fmin(P_func,V_MP_guess)[0]
+
+    P_MP = abs(P_func(V_MP))
+
+    if V_MP == 0:
+        I_MP = 0
+        FF = 0
+        eff = 0
+    else:
+        #Calculate the FF using MPP and then find eff.
+        I_MP = P_MP/V_MP #(V*mA)/V
+        FF = abs(P_MP/(V_OC*I_SC))*100 #(V*mA)/(V*mA)
+        FF = np.round(FF, 2)
+        eff = P_MP/P_in #((V*mA)*1000)/(V*A)
+        eff = np.round(eff, 4)
+
+    values = [FF, V_OC, I_SC, J_SC, eff]
+
+
+    print(f'the Fill Factor is: {FF}')
+    print(f'the V_oc is: {V_OC}')
+    print(f'the I_sc is: {I_SC}')
+    print(f'the J_sc is: {J_SC}')
+    print(f'the efficiency is: {eff*100}')
+
+
+
+#Dark Data
+#Same as with light but dark... but not used
+    IV_func_d = itp.interp1d(Vd, Id)
+    IV_func_inv_d = itp.interp1d(Id, Id)
+
+    V_OC_d = IV_func_inv_d(0)
+    
+    I_SC_d = abs(IV_func_d(0))
+    J_SC_d = I_SC_d * 1000 / area
+
+
+#determine both series and shunt resistance. This code is very messy and may not be correct. I take the slope at V_oc and J_sc. Ideally this is taken on a dark curve, however it can still give insights
+#on light data. There is definitly a better way to do this... a much better way.
+    x_1 = np.linspace(min(Vd),0,500)
+    x_2 = np.linspace(.001,max(Vd),500)
+    x = np.concatenate((x_1, x_2), axis=0)
+    kinda_V_OC_d = find_closest_number(V_OC_d, x)
+    index_V_OC_d = np.where(x == kinda_V_OC_d)
+    kinda_V_SC_d = find_closest_number(0, x)
+    index_V_SC_d = np.where(x == kinda_V_SC_d)
+    dx = x[1]-x[0]
+    f = IV_func_d(x)
+    dx_1 = FinDiff(0, dx, 1)
+    IV_derivative = dx_1(f)
+    R_s_i_2 = 1/IV_derivative[index_V_OC_d] * area
+    R_shunt_i_2 = 1/IV_derivative[index_V_SC_d] * area
+    R_s_i_2 = R_s_i_2[0].astype(np.float64)
+    R_s_i_2 = np.round(R_s_i_2, 2)
+    R_shunt_i_2 = R_shunt_i_2[0].astype(np.float64)
+    R_shunt_i_2 = np.round(R_shunt_i_2, 2)
+
+    print(f'the interpolated series resistance is: {R_s_i_2}')
+    print(f'the interpolated shunt resistance is: {R_shunt_i_2}')
+
+#Store needed values in array
+    array = [f"{substrate_num}", device, V_OC, J_SC, FF, eff*100, R_s_i_2, R_shunt_i_2, area]
+    
+    return array
+
+################################################################ OLD CODE ################################################################
+
+def total_data(V_arr, I_arr, V_arr_d, I_arr_d, i, area= (7.6)/100 , substrate_num=0):
 
     subcell = i
 
