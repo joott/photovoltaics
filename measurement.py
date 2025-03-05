@@ -2,12 +2,14 @@ import numpy as np
 import Keithley2400_with_4_probe as K24
 import Keithley2700_with_7700 as K27
 
-
-# ===============
-# Data collection
-# ===============
-
 def prepare_2400(K2400, four_probe=True):
+
+    '''
+        Arguments:
+            K2400: keithley object to prepare
+            four_probe: activates four-probe measurement
+    '''
+
     K2400.stop_buffer()
     K2400.disable_buffer()
     # Activates auto-zero, increasing measurement accuracy
@@ -20,13 +22,22 @@ def prepare_2400(K2400, four_probe=True):
     # Allows the 2400 to begin sourcing voltage
     K2400.enable_source()
 
-# generator function for current measurements
-# returns 2d array with columns for each device
 def measure_current(
         K2400, K2700,
         n_buffer, n_devices,
         V_arr,
         four_probe):
+
+    '''
+        Arguments:
+            K2400, K2700: keithley objects
+            n_buffer, n_devices: number of buffers and devices
+            V_arr: array of voltages to take measurements at
+            four_probe: true to activate four-probe
+
+        Returns:
+            A 2d array of current readings with columns for each device
+    '''
 
     prepare_2400(K2400, four_probe)
 
