@@ -94,6 +94,14 @@ def total_data_new(data_light, data_dark, device, area = (7.6)/100 , substrate_n
 #determine both series and shunt resistance. This code is very messy and may not be correct. I take the slope at V_oc and J_sc. Ideally this is taken on a dark curve, however it can still give insights
 #on light data. There is definitly a better way to do this... a much better way.
 
+    
+    '''
+    could use light data OR take dark data further than 1V (e.g. -1 to 2V)
+    to measure series resistance, should be on oom of ~1 ohms
+    '''
+
+    # TODO: remove interpolation (e.g. derivative), use scipy/numpy for simpler analysis.
+
     x = np.linspace(Vd[0], Vd[-1], 2001)
 
     index_V_OC_d = (np.absolute(x - V_OC_d)).argmin()
@@ -106,8 +114,6 @@ def total_data_new(data_light, data_dark, device, area = (7.6)/100 , substrate_n
 
     R_s_i_2 = 1/IV_derivative[index_V_OC_d] * area
     R_shunt_i_2 = 1/IV_derivative[index_V_SC_d] * area
-
-    # print(IV_derivative[index_V_OC_d], IV_derivative[index_V_SC_d])
 
     print(f'the interpolated series resistance is: {R_s_i_2}')
     print(f'the interpolated shunt resistance is: {R_shunt_i_2}')
