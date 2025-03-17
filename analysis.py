@@ -25,13 +25,14 @@ def characterize( data, device, verbose = False, area = (7.6)/100 , substrateID 
             - substrateID: use if characterizing multiple substrates, etc.
 
         Returns.  
+            - device number
             - fill factor (ff)
             - V_oc
             - short circuit current (I_sc)
             - short circuit current density (J_sc)
             - efficiency (eff) 
 
-            [ff, V_oc, I_sc, J_sc, eff]
+            [device, ff, V_oc, I_sc, J_sc, eff]
 
     '''
 
@@ -101,6 +102,7 @@ def characterize( data, device, verbose = False, area = (7.6)/100 , substrateID 
     return np.asarray([device, FF, V_OC, I_SC, J_SC, eff])
 
 
+
 def resistances(data, device, verbose=False, area = (7.6)/100 , substrateID = 0):
 
     '''
@@ -115,13 +117,59 @@ def resistances(data, device, verbose=False, area = (7.6)/100 , substrateID = 0)
                 - substrateID: use if characterizing multiple substrates, etc.
 
             Returns.  
-                - fill factor (ff)
-                - V_oc
-                - short circuit current (I_sc)
-                - short circuit current density (J_sc)
-                - efficiency (eff) 
+                - series resistance (R_series)
+                - shunt resistance (R_shunt) 
 
-                [ff, V_oc, I_sc, J_sc, eff]
+                [R_series, R_shunt]
+
+        '''
+    
+    Vd = data[: 0]
+    Id = data[:, device]
+
+    # error message for data processing, checks that voltage is high enough
+    if Vd[-1] < 1.8:
+        print("ERROR. voltage not high enough to measure resistances (V < 1.8).")
+        return
+
+    # takes derivative of dark IV curve
+    dI = np.gradient(Id)
+    # gets starting index for the last ~10% of the IV curve, assuming linearity has set in
+    idxs = Vd.length - (Vd.length * 0.1) - 1
+    # measures series resistance using the average of the slope for the last 10% of the IV curve
+    R_series = 1/np.average(dI[idxs:]) * area
+
+    # short circuit index is where V = 0
+    V_SC_idx = (np.absolute(Vd)).argmin()
+    # measures shunt resistance using the inverse derivative of IV curve at V_sc.
+    R_shunt = 1/dI[V_SC_idx] * area 
+
+    if verbose:
+        print(f'series resistance: {R_series}')
+        print(f'shunt resistance: {R_shunt}')
+    
+    return np.asarray([R_series, R_shunt])
+
+
+def resistances_depr(data, device, verbose=False, area = (7.6)/100 , substrateID = 0):
+
+    '''
+            [DEPRECATED] Calculates shunt and series resistance for a specific device. 
+            Has the option to print output or just return an array of data (i.e. verbose).
+
+            Args.
+                - data: opv measurements, dark data (0 sun intensity)
+                - device: device on the substrate
+                - verbose: prints output if desired, set to True
+                - area: estimated area of the device
+                - substrateID: use if characterizing multiple substrates, etc.
+
+            Returns.  
+                - device number
+                - series resistance (R_series)
+                - shunt resistance (R_shunt) 
+
+                [device, R_series, R_shunt]
 
         '''
     
@@ -158,11 +206,11 @@ def resistances(data, device, verbose=False, area = (7.6)/100 , substrateID = 0)
     dx_1 = FinDiff(0, dx, 1)
     IV_derivative = dx_1(f)
 
-    R_series_i_2 = 1/IV_derivative[index_V_OC_d] * area
-    R_shunt_i_2 = 1/IV_derivative[index_V_SC_d] * area
+    R_series = 1/IV_derivative[index_V_OC_d] * area
+    R_shunt = 1/IV_derivative[index_V_SC_d] * area
 
     if verbose:
-        print(f'series resistance: {R_series_i_2}')
-        print(f'shunt resistance: {R_shunt_i_2}')
+        print(f'series resistance: {R_series}')
+        print(f'shunt resistance: {R_shunt}')
     
-    return np.asarray([R_series_i_2, R_shunt_i_2])
+    return np.asarray([R_series, R_shunt])
