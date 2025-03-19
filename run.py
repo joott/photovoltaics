@@ -20,16 +20,26 @@ parser.add_argument('-d', '--devices', default=4, type=int,
                     help="Number of devices.")
 parser.add_argument('-f', '--four', action='store_true',
                     help="Runs measurement as four-probe.")
+parser.add_argument('-e', '--exclude', nargs='+', type=int,
+                    help="Devices to exclude as a space-separated list. Indexed from zero.")
 
 args = parser.parse_args()
 
-GPIB2400 = 'GPIB::17'
-GPIB2700 = 'GPIB::3'
+## senior lab keithleys
+# GPIB2400 = 'GPIB::17'
+# GPIB2700 = 'GPIB::3'
+
+## glove box keithleys
+GPIB2400 = 'GPIB::24'
+GPIB2700 = 'GPIB::17'
+
 K2400 = K24.Keithley2400(GPIB2400)
 K2700 = K27.Keithley2700_with_7700(GPIB2700)
 
 V_arr = np.arange(args.min, args.max+args.step, args.step)
-data = measure.measure_current(K2400, K2700, args.buffer, args.devices, V_arr, args.four)
+devices = np.delete(np.arange(args.devices), args.exclude)
+
+data = measure.measure_current(K2400, K2700, args.buffer, devices, V_arr, args.four)
 
 parent_directory = args.filename.parents[0]
 if not os.path.exists(parent_directory):
@@ -37,7 +47,7 @@ if not os.path.exists(parent_directory):
 
 with open(args.filename, 'w') as file:
     for i, v in enumerate(V_arr):
-        file.write(f"{v}")
+        file.write(f"{round(v,2)}")
         for j in range(args.devices):
             file.write(f"\t{data[i,j]}")
         file.write(f"\n")

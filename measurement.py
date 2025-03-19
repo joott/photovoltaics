@@ -1,6 +1,7 @@
 import numpy as np
 import Keithley2400_with_4_probe as K24
 import Keithley2700_with_7700 as K27
+from tqdm import tqdm
 
 def prepare_2400(K2400, four_probe=True):
 
@@ -24,9 +25,8 @@ def prepare_2400(K2400, four_probe=True):
 
 def measure_current(
         K2400, K2700,
-        n_buffer, n_devices,
-        V_arr,
-        four_probe):
+        n_buffer, devices,
+        V_arr, four_probe):
 
     '''
         Arguments:
@@ -40,22 +40,22 @@ def measure_current(
     '''
 
     prepare_2400(K2400, four_probe)
+    I_out = np.zeros((len(V_arr), len(devices)))
 
-    for i in range(n_devices):
+    for dev in devices:
         K2400.apply_voltage(compliance_current=0.5)
         # Closes a channel on the 2700 relevant to the selected device number
         K2700.open_all_channels()
         K2700.close_23()
-        K2700.close_channels(i+1)
-        K2700.close_channels(i+11)
-        I_out = np.zeros((len(V_arr), n_devices))
+        K2700.close_channels(dev+1)
+        K2700.close_channels(dev+11)
 
-        for idx, j in enumerate(V_arr):
+        for row, v in enumerate(tqdm(V_arr)):
             K2400.config_buffer(n_buffer)
-            K2400.source_voltage = j
+            K2400.source_voltage = v
             K2400.start_buffer()
             # Doesn't progress until the buffer is full, checking every 0.025 seconds
             K2400.wait_for_buffer(interval=0.025)
-            I_out[idx, i] = K2400.means[1]
+            I_out[row, dev] = K2400.means[1]
 
-        return I_out
+    return I_out
