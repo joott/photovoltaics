@@ -5,6 +5,7 @@ import pathlib
 import numpy as np
 import Keithley2400_with_4_probe as K24
 import Keithley2700_with_7700 as K27
+from jingle import success_jingle
 
 parser = argparse.ArgumentParser(prog="OPV measurement tool")
 
@@ -53,3 +54,4 @@ with open(args.filename, 'w') as file:
         for j in range(n_devices):
             file.write(f"\t{data[i,j]}")
         file.write(f"\n")
+    success_jingle(K2400)
