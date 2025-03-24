@@ -37,7 +37,9 @@ K2400 = K24.Keithley2400(GPIB2400)
 K2700 = K27.Keithley2700_with_7700(GPIB2700)
 
 V_arr = np.arange(args.min, args.max+args.step, args.step)
-devices = np.delete(np.arange(args.devices), args.exclude)
+devices = np.arange(args.devices)
+devices = np.delete(devices, args.exclude) if args.exclude != None else devices
+n_devices = len(devices)
 
 data = measure.measure_current(K2400, K2700, args.buffer, devices, V_arr, args.four)
 
@@ -48,6 +50,6 @@ if not os.path.exists(parent_directory):
 with open(args.filename, 'w') as file:
     for i, v in enumerate(V_arr):
         file.write(f"{round(v,2)}")
-        for j in range(args.devices):
+        for j in range(n_devices):
             file.write(f"\t{data[i,j]}")
         file.write(f"\n")

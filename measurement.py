@@ -42,13 +42,13 @@ def measure_current(
     prepare_2400(K2400, four_probe)
     I_out = np.zeros((len(V_arr), len(devices)))
 
-    for dev in devices:
+    for col, dev in enumerate(devices):
         K2400.apply_voltage(compliance_current=0.5)
         # Closes a channel on the 2700 relevant to the selected device number
         K2700.open_all_channels()
         K2700.close_23()
-        K2700.close_channels(dev+1)
-        K2700.close_channels(dev+11)
+        K2700.close_channels(int(dev+1))
+        K2700.close_channels(int(dev+11))
 
         for row, v in enumerate(tqdm(V_arr)):
             K2400.config_buffer(n_buffer)
@@ -56,6 +56,6 @@ def measure_current(
             K2400.start_buffer()
             # Doesn't progress until the buffer is full, checking every 0.025 seconds
             K2400.wait_for_buffer(interval=0.025)
-            I_out[row, dev] = K2400.means[1]
+            I_out[row, col] = K2400.means[1]
 
     return I_out
