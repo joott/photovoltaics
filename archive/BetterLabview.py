@@ -1,7 +1,6 @@
 import numpy as np
 import Keithley2400_with_4_probe as K24
 import Keithley2700_with_7700 as K27
-import matplotlib.pyplot as plt
 from time import sleep
 import random as rnd
 
@@ -23,10 +22,10 @@ def random_data(
     
     # Correcting integer 'device_list' inputs into lists with one item
     #device_list = [int(device_list)]
-    
+
     # Creating V_arr
     V_arr = np.arange(V_min,V_max+V_step,V_step)
-    
+
     count = 0
     # Loop over the voltage range and write data to array
     for i in device_list:
@@ -93,7 +92,7 @@ def collect_data_current(
         I_out = np.empty_like(V_arr)
         V_out = np.empty_like(V_arr)
 
-        for j in V_arr:
+        for idx, j in enumerate(V_arr):
             # Configures the buffer to collect the specified number of points
             K2400.config_buffer(buffer_num)
             # Sets the output voltage to a specific entry in V_arr
