@@ -1,0 +1,143 @@
+/*
+Code to control the servos using the Keithley 7700
+
+pin 2 and 4 are both digital input pins. They should be wired (in series with a resistor) to register if a current is flowing from channel 7 of the Keithley 7700 cassette
+The Arduino times how long the current is flowing. In the current setup, 500 ms of voltage is applied by the Keithley to close the shutter and 1000 ms to open the shutter. The Arduino code registers any time between 300 and 700 ms to be closing the shutter, and between 800 and 1200 ms to be opening the shutter.
+
+*/
+
+// -----LIBRARIES
+
+#include <Servo.h>
+
+// Constants
+  const int servo1Pin = 9;  // control pin for servo 1
+  const int servo2Pin = 10;  // control pin for servo 2
+  const int digital1Pin = 2;  // input for servo 1
+  const int digital2Pin = 4; // input for servo 2
+
+  const int lowIntervalMin = 300;  // in ms
+  const int lowIntervalMax = 700;
+  const int highIntervalMin = 800;
+  const int highIntervalMax = 1200;
+  const int servoMinDegrees = 0; // the limits to servo movement
+  const int servoMaxDegrees = 90;
+
+
+// Variables
+
+  byte servo1State = LOW; // whether servo is high or low state (low = closed)
+  byte servo2State = LOW; // whether servo is in high or low state (high = open)
+  byte trigger1 = LOW;
+  byte trigger2 = LOW;
+
+  unsigned long pulse1start = 0;
+  unsigned long pulse2start = 0;
+  unsigned long pulse1length = 0;
+  unsigned long pulse2length = 0;
+
+  Servo servo1; 
+  Servo servo2;
+
+  int servo1Position = 0;     // the current angle of the servo - starting at 0.
+  int servo2Position = 0;     // the current angle of the servo - starting at 0.
+  int servoInterval = 40;     // time in ms between servo increments (slows servo movement)
+  int servoDegrees = 15;
+
+  unsigned long currentMillis = 0;    // stores the value of millis() in each iteration of loop()
+  unsigned long previousServo1Millis = 0; // the time when the servo was last moved
+  unsigned long previousServo2Millis = 0; // the time when the servo was last moved
+
+
+void setup() {
+   Serial.begin(9600);
+    // set the Led pins as output:
+    pinMode(servo1Pin, OUTPUT);
+    pinMode(servo2Pin, OUTPUT);
+    pinMode(digital1Pin, INPUT_PULLUP);   // pullup resistor??
+    pinMode(digital2Pin, INPUT_PULLUP);
+  
+    servo1.write(servo1Position); // sets the initial position
+    servo1.attach(servo1Pin);
+    servo2.write(servo2Position); // sets the initial position
+    servo2.attach(servo2Pin);
+}
+
+void loop() {
+    currentMillis = millis();   // millis() fakes running the code in parallel. see: https://roboticsbackend.com/how-to-do-multitasking-with-arduino/
+    readInput1();
+    readInput2();
+    updateServo1();
+    updateServo2();
+}
+
+
+
+void readInput1() {
+  if (digitalRead(digital1Pin) == HIGH && trigger1 == LOW) {  // if we just registered current
+      trigger1 = HIGH;
+      pulse1start = millis();		// note that pulse1 has started
+  }
+
+  else if (digitalRead(digital1Pin) == LOW && trigger1 == HIGH){ // if current has just stopped
+    pulse1length = millis() - pulse1start;  // determine pulse length and use to determine if shutter should be open or closed
+    if (pulse1length >= lowIntervalMin && pulse1length <= lowIntervalMax){
+      servo1State = LOW;
+    }
+    else if(pulse1length >= highIntervalMin && pulse1length <= highIntervalMax){
+      servo1State = HIGH;
+    }
+    trigger1 = LOW;
+  }
+}
+
+
+
+void readInput2() {
+  if (digitalRead(digital2Pin) == HIGH && trigger2 == LOW) {
+      trigger2 = HIGH;
+      pulse2start = millis();
+  }
+  else if (digitalRead(digital2Pin) == LOW && trigger2 == HIGH){
+    pulse2length = millis() - pulse2start;
+    if (pulse2length >= lowIntervalMin && pulse2length <= lowIntervalMax){
+      servo2State = LOW;
+    }
+    else if(pulse2length >= highIntervalMin && pulse2length <= highIntervalMax){
+      servo2State = HIGH;
+    }
+    trigger2 = LOW;
+  }
+}
+
+
+void updateServo1(){ // may want to improve this function to ensure servo goes to correct locations, as it seems squirrely  
+    if (millis() - previousServo1Millis >= servoInterval){  // determine if we need to move servo again
+      if (servo1State == LOW && servo1Position != servoMinDegrees){ // check if position is correct
+        servo1Position -= servoDegrees;
+      }
+    if (servo1State == HIGH && servo1Position != servoMaxDegrees){  // check if position is correct
+        servo1Position += servoDegrees;
+      }
+      previousServo1Millis = millis();
+    }
+    servo1.write(servo1Position);  // update servo position
+  
+}
+
+
+void updateServo2(){
+    if (millis() - previousServo2Millis >= servoInterval){
+      if (servo2State == LOW && servo2Position != servoMinDegrees){
+        servo2Position -= servoDegrees;
+      }
+    if (servo2State == HIGH && servo2Position != servoMaxDegrees){
+        servo2Position += servoDegrees;
+      }
+      previousServo2Millis = millis();
+    }
+    servo2.write(servo2Position);
+  
+}
+
+
