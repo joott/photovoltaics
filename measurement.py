@@ -2,6 +2,7 @@ import numpy as np
 import Keithley2400_with_4_probe as K24
 import Keithley2700_with_7700 as K27
 from tqdm import tqdm
+from time import sleep
 
 def prepare_2400(K2400, four_probe=True):
 
@@ -23,6 +24,22 @@ def prepare_2400(K2400, four_probe=True):
     # Allows the 2400 to begin sourcing voltage
     K2400.enable_source()
 
+def close_shutter(K2400, K2700):
+    K2400.apply_voltage(compliance_current=0.5)
+    K2700.open_all_channels()
+    K2700.close_channels(7)
+    K2400.source_voltage = 3.0
+    sleep(0.5)
+    K2400.source_voltage = 0.0
+
+def open_shutter(K2400, K2700):
+    K2400.apply_voltage(compliance_current=0.5)
+    K2700.open_all_channels()
+    K2700.close_channels(7)
+    K2400.source_voltage = 3.0
+    sleep(1.0)
+    K2400.source_voltage = 0.0
+
 def measure_current(
         K2400, K2700,
         n_buffer, devices,
@@ -39,7 +56,6 @@ def measure_current(
             A 2d array of current readings with columns for each device
     '''
 
-    prepare_2400(K2400, four_probe)
     I_out = np.zeros((len(V_arr), len(devices)))
 
     for col, dev in enumerate(devices):

@@ -6,6 +6,7 @@ import numpy as np
 import Keithley2400_with_4_probe as K24
 import Keithley2700_with_7700 as K27
 from jingle import success_jingle
+import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser(prog="OPV measurement tool")
 
@@ -42,7 +43,12 @@ devices = np.arange(args.devices)
 devices = np.delete(devices, args.exclude) if args.exclude != None else devices
 n_devices = len(devices)
 
-data = measure.measure_current(K2400, K2700, args.buffer, devices, V_arr, args.four)
+measure.prepare_2400(K2400, args.four)
+measure.close_shutter(K2400, K2700)
+data_dark = measure.measure_current(K2400, K2700, args.buffer, devices, V_arr, args.four)
+measure.open_shutter(K2400, K2700)
+data_light = measure.measure_current(K2400, K2700, args.buffer, devices, V_arr, args.four)
+measure.close_shutter(K2400, K2700)
 
 parent_directory = args.filename.parents[0]
 if not os.path.exists(parent_directory):
@@ -52,6 +58,6 @@ with open(args.filename, 'w') as file:
     for i, v in enumerate(V_arr):
         file.write(f"{round(v,2)}")
         for j in range(n_devices):
-            file.write(f"\t{data[i,j]}")
+            file.write(f"\t{data_light[i,j]}\t{data_dark[i,j]}")
         file.write(f"\n")
     success_jingle(K2400)
